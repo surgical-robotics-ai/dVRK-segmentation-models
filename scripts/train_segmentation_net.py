@@ -125,7 +125,7 @@ def main():
     ds = CombinedVidDataset(vid_filepath, seg_filepath)
     dl = ThreadDataLoader(ds, batch_size=4, num_workers=0, shuffle=True)
 
-    pretrained_weigths_path = Path("./assets/data/weights/trained-weights.pt")
+    pretrained_weigths_path = Path("./assets/weights/trained-weights.pt")
     model = create_FlexibleUnet(device, pretrained_weigths_path)
     optimizer = torch.optim.Adam(model.parameters(), 1e-2)
 
