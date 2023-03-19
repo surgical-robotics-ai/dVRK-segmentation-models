@@ -13,6 +13,7 @@ import monai.transforms as mt
 
 from dataclasses import dataclass, field
 from surg_seg.Datasets.VideoDatasets import CombinedVidDataset
+import pickle
 
 
 @dataclass
@@ -33,6 +34,9 @@ class TrainingStats:
         ax.plot(self.epoch_list, self.iou_list, label="iou")
         plt.legend()
         plt.show()
+
+    def to_pickle(self, path: Path):
+        pickle.dump(self, open(path / "training_stats.pkl", "wb"))
 
 
 @dataclass
@@ -129,6 +133,10 @@ def main():
     model, training_stats = trainer.train_model(model, optimizer, dl)
 
     training_stats.plot_stats()
+
+    model_path = "./assets/weights/myweights"
+    torch.save(model.state_dict(), model_path)
+    training_stats.to_pickle(model_path)
 
 
 if __name__ == "__main__":
