@@ -65,9 +65,10 @@ def main():
     model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device)
 
     ## Data loading
-    vid_root = Path("/home/juan1995/research_juan/accelnet_grant/data/rec01/")
-    vid_filepath = vid_root / "raw/rec01_seg_raw.avi"
-    seg_filepath = vid_root / "annotation2colors/rec01_seg_annotation2colors.avi"
+    vid_root = Path("/home/juan1995/research_juan/accelnet_grant/data/rec04/")
+    vid_filepath = vid_root / "raw/rec04_seg_raw.avi"
+    seg_filepath = vid_root / "annotation2colors/rec04_seg_annotation2colors.avi"
+
     ds = CombinedVidDataset(vid_filepath, seg_filepath)
 
     output_path = vid_root / "inferred.mp4"

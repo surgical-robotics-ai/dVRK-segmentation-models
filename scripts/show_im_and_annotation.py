@@ -39,6 +39,7 @@ def main():
         ax.imshow(blended)
         ax.set_title(f"Frame: {frame}")
         ax.axis("off")
+    fig.set_tight_layout(True)
 
     plt.show()
 
