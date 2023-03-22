@@ -15,6 +15,15 @@ from dataclasses import dataclass
 
 
 @dataclass
+class LabelParserElement:
+    """Helper class that relates current rgb color, name and id."""
+
+    id: int
+    name: str
+    rgb: List[int]
+
+
+@dataclass
 class LabelParser:
     path2mapping: Path
     annotations_type: str
@@ -27,7 +36,8 @@ class LabelParser:
 
         self.mask_num = len(self.mask)
         self.conversion_list = [
-            (key, idx, value) for idx, (key, value) in enumerate(self.mask.items())
+            LabelParserElement(idx, key, value)
+            for idx, (key, value) in enumerate(self.mask.items())
         ]
 
     def convert_rgb_to_single_channel(self, label_im, color_first=True):
@@ -43,9 +53,11 @@ class LabelParser:
         assert label_im.shape[2] == 3, "label in wrong format"
 
         converted_img = np.zeros((label_im.shape[0], label_im.shape[1]))
+
+        e: LabelParserElement
         for e in self.conversion_list:
-            rgb = e[2]
-            new_color = e[1]
+            rgb = e.rgb
+            new_color = e.id
             indices = np.where(np.all(label_im == rgb, axis=-1))
             converted_img[indices[0], indices[1]] = new_color
 
@@ -53,6 +65,43 @@ class LabelParser:
             np.expand_dims(converted_img, 0) if color_first else np.expand_dims(converted_img, -1)
         )
         return converted_img
+
+    def convert_rgb_to_onehot(self, mask: np.ndarray):
+        """Convert rgb label to one-hot encoding"""
+
+        assert len(mask.shape) == 3, "label not a rgb image"
+        assert mask.shape[2] == 3, "label not a rgb image"
+
+        h, w, c = mask.shape
+
+        ## Convert grey-scale label to one-hot encoding
+        new_mask = np.zeros((self.mask_num, h, w))
+
+        e: LabelParserElement
+        for e in self.conversion_list:
+            rgb = e.rgb
+            new_idx = e.id
+            new_mask[new_idx, :, :] = np.all(mask == rgb, axis=-1)
+
+        return new_mask
+
+    def convert_onehot_to_single_ch(self, onehot_mask: torch.tensor):
+        m_temp = torch.argmax(onehot_mask, axis=0)
+        m_temp = torch.unsqueeze(m_temp, 0)
+        return m_temp
+
+    # def convert_onehot_to_rgb(self, onehot_mask):
+
+    # new_mask = np.zeros((1, onehot_mask.shape[1], onehot_mask.shape[2]))
+    #     e: LabelParserElement
+    #     for e in self.conversion_list:
+
+    #         temp = ((m_temp == e.id) * mask_value[idx]).data.numpy()
+    #         new_mask += temp
+    #     new_mask = np.expand_dims(new_mask, axis=-1)
+    #     new_mask = np.concatenate((new_mask, new_mask, new_mask), axis=-1)
+    #     new_mask = new_mask.astype(np.int32)
+    #     return new_mask
 
 
 class Transforms:
@@ -137,6 +186,8 @@ class ImageSegmentationDataset(Dataset):
 
         if transform:
             image = Transforms.img_transforms(image)
+            annotation = self.label_parser.convert_rgb_to_onehot(annotation)
+            annotation = torch.tensor(annotation)
 
         return {"img": image, "annotation": annotation}
 
@@ -144,9 +195,11 @@ class ImageSegmentationDataset(Dataset):
 def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
 
     data = ds[idx]  # Get transformed images
-    raw_label = data["annotation"]
-    single_ch_annotation = ds.label_parser.convert_rgb_to_single_channel(raw_label)
+    single_ch_annotation = ds.label_parser.convert_onehot_to_single_ch(data["annotation"])
+    single_ch_annotation = np.array(single_ch_annotation)
+    # single_ch_annotation = ds.label_parser.convert_rgb_to_single_channel(raw_label)
     raw_image = np.array(Transforms.inv_transforms(data["img"]))
+    raw_label = ds.__getitem__(100, transform=False)["annotation"]
 
     blended = blend_images(
         raw_image,
@@ -163,6 +216,7 @@ def display_untransformed_images(idx: int, ds: ImageSegmentationDataset):
 
     raw_image = data["img"]
     raw_label = data["annotation"]
+    onehot = ds.label_parser.convert_rgb_to_onehot(raw_label)
 
     fake_annotation = np.zeros_like(np.array(data["img"]))
     fake_annotation[:40, :40] = [1, 1, 1]
@@ -193,9 +247,9 @@ def display_images(img, label, blended):
 
 
 if __name__ == "__main__":
-    data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec01")
+    data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec03")
 
-    ds = ImageSegmentationDataset(data_dir, "4colors")
+    ds = ImageSegmentationDataset(data_dir, "5colors")
 
     display_untransformed_images(100, ds)
-    display_transformed_images(140, ds)
+    display_transformed_images(100, ds)
