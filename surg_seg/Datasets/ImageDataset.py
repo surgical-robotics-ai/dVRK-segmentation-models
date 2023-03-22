@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import List
 import numpy as np
@@ -10,9 +11,51 @@ import re
 import natsort
 
 from monai.visualize.utils import blend_images
+from dataclasses import dataclass
 
 
-class ImageSegmentationDataset(Dataset):
+@dataclass
+class LabelParser:
+    path2mapping: Path
+    annotations_type: str
+
+    def __post_init__(self):
+
+        with open(self.path2mapping, "r") as f:
+            self.mapper = json.load(f)
+        self.mask = self.mapper[self.annotations_type]
+
+        self.mask_num = len(self.mask)
+        self.conversion_list = [
+            (key, idx, value) for idx, (key, value) in enumerate(self.mask.items())
+        ]
+
+    def convert_rgb_to_single_channel(self, label_im, color_first=True):
+        """Convert an annotations RGB image into a single channel image. The
+        label image should have a shape `HWC` where `c==3`. This function
+        converts labels that are compatible with Monai.blend function.
+
+        Func to convert indexes taken from
+        https://stackoverflow.com/questions/12138339/finding-the-x-y-indexes-of-specific-r-g-b-color-values-from-images-stored-in
+
+        """
+
+        assert label_im.shape[2] == 3, "label in wrong format"
+
+        converted_img = np.zeros((label_im.shape[0], label_im.shape[1]))
+        for e in self.conversion_list:
+            rgb = e[2]
+            new_color = e[1]
+            indices = np.where(np.all(label_im == rgb, axis=-1))
+            converted_img[indices[0], indices[1]] = new_color
+
+        converted_img = (
+            np.expand_dims(converted_img, 0) if color_first else np.expand_dims(converted_img, -1)
+        )
+        return converted_img
+
+
+class Transforms:
 
     img_transforms = T.Compose(
         [
@@ -20,7 +63,16 @@ class ImageSegmentationDataset(Dataset):
             T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),  # ImageNet normalize
         ]
     )
+    # https://discuss.pytorch.org/t/simple-way-to-inverse-transform-normalization/4821/3
+    inv_transforms = T.Compose(
+        [
+            T.Normalize(mean=[0.0, 0.0, 0.0], std=[1 / 0.229, 1 / 0.224, 1 / 0.225]),
+            T.Normalize(mean=[-0.485, -0.456, -0.406], std=[1.0, 1.0, 1.0]),
+        ]
+    )
 
+
+class ImageSegmentationDataset(Dataset):
     def __init__(self, root_dir: Path, annotation_type: str):
         """Image dataset
 
@@ -36,6 +88,8 @@ class ImageSegmentationDataset(Dataset):
         self.images_path_list = natsort.natsorted(list((self.root_dir / "raw").glob("*.png")))
         self.flag_list = np.zeros(len(self.images_path_list))
         self.images_id_list = self.compute_id_list()
+
+        self.label_parser = LabelParser(self.root_dir / "mapping.json", annotation_type)
 
     def compute_id_list(self):
         ids = []
@@ -78,40 +132,70 @@ class ImageSegmentationDataset(Dataset):
         if isinstance(idx, slice):
             RuntimeError("Slices are not supported")
 
-        image = Image.open(self.images_path_list[idx])
-        annotation = Image.open(self.annotation_dir / self.images_path_list[idx].name)
+        image = np.array(Image.open(self.images_path_list[idx]))
+        annotation = np.array(Image.open(self.annotation_dir / self.images_path_list[idx].name))
 
         if transform:
-            image = self.img_transforms(image)
+            image = Transforms.img_transforms(image)
 
         return {"img": image, "annotation": annotation}
+
+
+def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
+
+    data = ds[idx]  # Get transformed images
+    raw_label = data["annotation"]
+    single_ch_annotation = ds.label_parser.convert_rgb_to_single_channel(raw_label)
+    raw_image = np.array(Transforms.inv_transforms(data["img"]))
+
+    blended = blend_images(
+        raw_image,
+        single_ch_annotation,
+        cmap="viridis",
+        alpha=0.8,
+    )
+
+    display_images(raw_image.transpose(1, 2, 0), raw_label, blended.transpose(1, 2, 0))
+
+
+def display_untransformed_images(idx: int, ds: ImageSegmentationDataset):
+    data = ds.__getitem__(100, transform=False)  # Get raw images
+
+    raw_image = data["img"]
+    raw_label = data["annotation"]
+
+    fake_annotation = np.zeros_like(np.array(data["img"]))
+    fake_annotation[:40, :40] = [1, 1, 1]
+    fake_annotation[40:80, 40:80] = [2, 2, 2]
+    fake_annotation[80:120, 80:120] = [3, 3, 3]
+
+    single_ch_label = ds.label_parser.convert_rgb_to_single_channel(raw_label)
+    blended = blend_images(
+        raw_image.transpose(2, 0, 1),
+        single_ch_label,
+        cmap="viridis",
+        alpha=0.8,
+    )
+
+    display_images(raw_image, raw_label, blended.transpose(1, 2, 0))
+
+
+def display_images(img, label, blended):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(1, 3)
+    ax[0].imshow(img)
+    ax[1].imshow(label)
+    ax[2].imshow(blended)
+    [a.set_axis_off() for a in ax.squeeze()]
+    fig.set_tight_layout(True)
+    plt.show()
 
 
 if __name__ == "__main__":
     data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec01")
 
-    ds = ImageSegmentationDataset(data_dir, "5colors")
+    ds = ImageSegmentationDataset(data_dir, "4colors")
 
-    print(ds.images_id_list[1:15:2])
-    print(ds.images_path_list[1:15:2])
-
-    data = ds.__getitem__(100, transform=False)
-
-    blended = blend_images(
-        np.array(data["img"]).transpose(2, 0, 1),
-        np.array(data["annotation"]).transpose(2, 0, 1)[:1, :, :],
-        cmap="viridis",
-        alpha=0.8,
-    )
-
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots(1, 3)
-    ax[0].imshow(np.array(data["img"]))
-    ax[1].imshow(np.array(data["annotation"]))
-    ax[2].imshow(blended.transpose(1, 2, 0))
-    [a.set_axis_off() for a in ax.squeeze()]
-    fig.set_tight_layout(True)
-    plt.show()
-
-    pass
+    display_untransformed_images(100, ds)
+    display_transformed_images(140, ds)
