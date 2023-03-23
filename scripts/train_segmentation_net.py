@@ -12,6 +12,7 @@ from monai.networks.nets import FlexibleUNet
 import monai.transforms as mt
 
 from dataclasses import dataclass, field
+from surg_seg.Datasets.ImageDataset import ImageSegmentationDataset
 from surg_seg.Datasets.VideoDatasets import CombinedVidDataset
 import pickle
 
@@ -95,11 +96,11 @@ class ModelTrainer:
         return model, training_stats
 
 
-def create_FlexibleUnet(device, pretrained_weights_path: Path):
+def create_FlexibleUnet(device, pretrained_weights_path: Path, out_channels: int):
 
     model = FlexibleUNet(
         in_channels=3,
-        out_channels=1,
+        out_channels=out_channels,
         backbone="efficientnet-b0",
         pretrained=True,
         is_pad=False,
@@ -116,7 +117,7 @@ def create_FlexibleUnet(device, pretrained_weights_path: Path):
     return model
 
 
-def main():
+def train_with_video_dataset():
     device = "cpu"
 
     vid_root = Path("/home/juan1995/research_juan/accelnet_grant/data/rec01/")
@@ -126,7 +127,7 @@ def main():
     dl = ThreadDataLoader(ds, batch_size=4, num_workers=0, shuffle=True)
 
     pretrained_weigths_path = Path("./assets/weights/trained-weights.pt")
-    model = create_FlexibleUnet(device, pretrained_weigths_path)
+    model = create_FlexibleUnet(device, pretrained_weigths_path, ds.label_channels)
     optimizer = torch.optim.Adam(model.parameters(), 1e-2)
 
     trainer = ModelTrainer(device=device, max_epochs=2)
@@ -134,9 +135,33 @@ def main():
 
     training_stats.plot_stats()
 
-    model_path = "./assets/weights/myweights"
+    model_path = "./assets/weights/myweights_video"
     torch.save(model.state_dict(), model_path)
     training_stats.to_pickle(model_path)
+
+
+def train_with_image_dataset():
+    device = "cpu"
+    data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec03")
+    ds = ImageSegmentationDataset(data_dir, "5colors")
+    dl = ThreadDataLoader(ds, batch_size=4, num_workers=0, shuffle=True)
+
+    pretrained_weigths_path = Path("./assets/weights/trained-weights")
+    model = create_FlexibleUnet(device, pretrained_weigths_path, ds.label_channels)
+    optimizer = torch.optim.Adam(model.parameters(), 1e-2)
+
+    trainer = ModelTrainer(device=device, max_epochs=2)
+    model, training_stats = trainer.train_model(model, optimizer, dl)
+
+    training_stats.plot_stats()
+    model_path = "./assets/weights/myweights_image"
+    torch.save(model.state_dict(), model_path)
+    training_stats.to_pickle(model_path)
+
+
+def main():
+    # train_with_video_dataset()
+    train_with_image_dataset()
 
 
 if __name__ == "__main__":

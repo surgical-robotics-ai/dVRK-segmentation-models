@@ -138,6 +138,7 @@ class ImageSegmentationDataset(Dataset):
         self.images_id_list = self.compute_id_list()
 
         self.label_parser = LabelParser(self.root_dir / "mapping.json", annotation_type)
+        self.label_channels = self.label_parser.mask_num
 
     def compute_id_list(self):
         ids = []
