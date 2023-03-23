@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List
 import numpy as np
 import torch
-import torchvision
 import torchvision.transforms as T
 from PIL import Image
 from torch.utils.data import Dataset
@@ -189,17 +188,19 @@ class ImageSegmentationDataset(Dataset):
             annotation = self.label_parser.convert_rgb_to_onehot(annotation)
             annotation = torch.tensor(annotation)
 
-        return {"img": image, "annotation": annotation}
+        return {"image": image, "label": annotation}
 
 
 def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
 
     data = ds[idx]  # Get transformed images
-    single_ch_annotation = ds.label_parser.convert_onehot_to_single_ch(data["annotation"])
+    print(f"one-hot shape: {data['label'].shape}")
+
+    single_ch_annotation = ds.label_parser.convert_onehot_to_single_ch(data["label"])
     single_ch_annotation = np.array(single_ch_annotation)
     # single_ch_annotation = ds.label_parser.convert_rgb_to_single_channel(raw_label)
-    raw_image = np.array(Transforms.inv_transforms(data["img"]))
-    raw_label = ds.__getitem__(100, transform=False)["annotation"]
+    raw_image = np.array(Transforms.inv_transforms(data["image"]))
+    raw_label = ds.__getitem__(100, transform=False)["label"]
 
     blended = blend_images(
         raw_image,
@@ -214,11 +215,11 @@ def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
 def display_untransformed_images(idx: int, ds: ImageSegmentationDataset):
     data = ds.__getitem__(100, transform=False)  # Get raw images
 
-    raw_image = data["img"]
-    raw_label = data["annotation"]
+    raw_image = data["image"]
+    raw_label = data["label"]
     onehot = ds.label_parser.convert_rgb_to_onehot(raw_label)
 
-    fake_annotation = np.zeros_like(np.array(data["img"]))
+    fake_annotation = np.zeros_like(np.array(data["image"]))
     fake_annotation[:40, :40] = [1, 1, 1]
     fake_annotation[40:80, 40:80] = [2, 2, 2]
     fake_annotation[80:120, 80:120] = [3, 3, 3]
@@ -248,7 +249,6 @@ def display_images(img, label, blended):
 
 if __name__ == "__main__":
     data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec03")
-
     ds = ImageSegmentationDataset(data_dir, "5colors")
 
     display_untransformed_images(100, ds)
