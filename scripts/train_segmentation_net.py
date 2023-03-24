@@ -182,19 +182,19 @@ def train_with_image_dataset():
     print(f"Training dataset size: {len(ds)}")
     print(f"Validation dataset size: {len(val_ds)}")
 
-    pretrained_weigths_path = Path("./assets/weights/trained-weights")
+    pretrained_weigths_path = Path("./assets/weights/pretrained-weights")
     model = create_FlexibleUnet(device, pretrained_weigths_path, ds.label_channels)
     optimizer = torch.optim.Adam(model.parameters(), 1e-2)
 
     trainer = ModelTrainer(device=device, max_epochs=2)
     model, training_stats = trainer.train_model(model, optimizer, dl, validation_dl=val_dl)
 
-    training_stats.plot_stats()
 
     model_path = Path("./assets/weights/myweights_image")
     model_path.mkdir(exist_ok=True)
     torch.save(model.state_dict(), model_path / "myweights.pt")
     training_stats.to_pickle(model_path)
+    training_stats.plot_stats(file_path=model_path)
 
     print(f"Last train IOU {training_stats.iou_list[-1]}")
     print(f"Last validation IOU {training_stats.validation_iou_list[-1]}")
