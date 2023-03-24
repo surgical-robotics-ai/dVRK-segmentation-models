@@ -10,7 +10,7 @@ import re
 import natsort
 
 from monai.visualize.utils import blend_images
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, field
 
 
 @dataclass
@@ -31,7 +31,13 @@ class LabelParser:
 
         with open(self.path2mapping, "r") as f:
             self.mapper = json.load(f)
-        self.mask = self.mapper[self.annotations_type]
+
+        if self.annotations_type in self.mapper:
+            self.mask = self.mapper[self.annotations_type]
+        else:
+            raise RuntimeWarning(
+                f"annotations type {self.annotations_type} not found in {self.path2mapping}"
+            )
 
         self.mask_num = len(self.mask)
         self.conversion_list = [
@@ -120,25 +126,26 @@ class Transforms:
     )
 
 
-class ImageSegmentationDataset(Dataset):
-    def __init__(self, root_dir: Path, annotation_type: str):
-        """Image dataset
+@dataclass
+class SingleImageFolder:
+    root_dir: Path
+    annotation_type: InitVar[str]
+    annotation_path: Path = field(init=False)
+    image_path_list: List[Path] = field(init=False)
+    label_path_list: List[Path] = field(init=False)
+    image_id_list: List[int] = field(init=False)
+    # Auxiliary variables used to identify duplicated ids in image folder
+    flag_list: List[int] = field(init=False)
 
-        Parameters
-        ----------
-        root_dir : Path
-        annotation_type : str
-            Either [2colors, 4colors, or 5colors]
-        """
-        self.root_dir = root_dir
+    def __post_init__(self, annotation_type):
+
         self.annotation_dir = self.__get_annotation_dir(annotation_type)
 
         self.images_path_list = natsort.natsorted(list((self.root_dir / "raw").glob("*.png")))
         self.flag_list = np.zeros(len(self.images_path_list))
         self.images_id_list = self.compute_id_list()
 
-        self.label_parser = LabelParser(self.root_dir / "mapping.json", annotation_type)
-        self.label_channels = self.label_parser.mask_num
+        self.label_path_list = [self.annotation_dir / img.name for img in self.images_path_list]
 
     def compute_id_list(self):
         ids = []
@@ -174,15 +181,42 @@ class ImageSegmentationDataset(Dataset):
 
         self.flag_list[id_match] = 1
 
+
+class ImageSegmentationDataset(Dataset):
+    def __init__(self, root_dirs: List[Path], annotation_type: str):
+        """Image dataset
+
+        Parameters
+        ----------
+        root_dir : Path
+        annotation_type : str
+            Either [2colors, 4colors, or 5colors]
+        """
+
+        if not isinstance(root_dirs, list):
+            root_dirs = [root_dirs]
+
+        self.image_folder_list = []
+        self.images_list = []
+        self.labels_list = []
+        for root_dir in root_dirs:
+            single_folder = SingleImageFolder(root_dir, annotation_type)
+            self.image_folder_list.append(single_folder)
+            self.images_list += single_folder.images_path_list
+            self.labels_list += single_folder.label_path_list
+
+        self.label_parser = LabelParser(root_dirs[0] / "mapping.json", annotation_type)
+        self.label_channels = self.label_parser.mask_num
+
     def __len__(self):
-        return len(self.images_path_list)
+        return len(self.images_list)
 
     def __getitem__(self, idx, transform=True):
         if isinstance(idx, slice):
             RuntimeError("Slices are not supported")
 
-        image = np.array(Image.open(self.images_path_list[idx]))
-        annotation = np.array(Image.open(self.annotation_dir / self.images_path_list[idx].name))
+        image = np.array(Image.open(self.images_list[idx]))
+        annotation = np.array(Image.open(self.labels_list[idx]))
 
         if transform:
             image = Transforms.img_transforms(image)
@@ -249,8 +283,13 @@ def display_images(img, label, blended):
 
 
 if __name__ == "__main__":
-    data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec03")
-    ds = ImageSegmentationDataset(data_dir, "5colors")
+    root = Path("/home/juan1995/research_juan/accelnet_grant/data")
+    data_dirs = [root / "rec01", root / "rec03"]
+
+    ds = ImageSegmentationDataset(data_dirs, "5colors")
+
+    print(f"length of dataset: {len(ds)}")
 
     display_untransformed_images(100, ds)
     display_transformed_images(100, ds)
+    display_transformed_images(230, ds)
