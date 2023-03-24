@@ -36,8 +36,11 @@ class FlexibleUnet1InferencePipe(AbstractInferencePipe):
 
     def infer(self, im: torch.Tensor):
         im = im.to(self.device)
-        inferred = self.model(im[None]) > 0
-        inferred = inferred[0].detach().cpu()
+        # inferred = self.model(im[None]) > 0
+        # im is a metatensor. im[None] is a tensor with a batch dimension of 1
+        inferred = self.model(im[None].as_tensor())[0]
+        inferred = inferred.argmax(dim=0, keepdim=True)
+        inferred = inferred.detach().cpu()
         return inferred
 
     def upload_weights(self):

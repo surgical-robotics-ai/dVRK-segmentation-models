@@ -28,11 +28,15 @@ class TrainingStats:
         self.loss_list.append(loss)
         self.iou_list.append(iou)
 
-    def plot_stats(self):
+    def plot_stats(self, file_path: Path = None):
         fig, ax = plt.subplots(1, 1, figsize=(6, 6), facecolor="white")
         ax.set_xlabel("Epoch")
         ax.plot(self.epoch_list, self.loss_list, label="loss")
         ax.plot(self.epoch_list, self.iou_list, label="iou")
+
+        if file_path is not None:
+            plt.savefig(file_path / "training_stats.png")
+
         plt.legend()
         plt.show()
 
@@ -50,7 +54,7 @@ class ModelTrainer:
 
     def __post_init__(self):
         self.dice_metric = DiceMetric(reduction="mean")
-        self.iou_metric = MeanIoU(reduction="mean")
+        self.iou_metric = MeanIoU(include_background=False, reduction="mean")
         self.post_trans = mt.Compose(
             [
                 mt.Activations(sigmoid=True),
@@ -154,9 +158,13 @@ def train_with_image_dataset():
     model, training_stats = trainer.train_model(model, optimizer, dl)
 
     training_stats.plot_stats()
-    model_path = "./assets/weights/myweights_image"
-    torch.save(model.state_dict(), model_path)
+
+    model_path = Path("./assets/weights/myweights_image")
+    model_path.mkdir(exist_ok=True)
+    torch.save(model.state_dict(), model_path / "myweights.pt")
     training_stats.to_pickle(model_path)
+
+    print(f"Last IOU {training_stats.iou_list[-1]}")
 
 
 def main():

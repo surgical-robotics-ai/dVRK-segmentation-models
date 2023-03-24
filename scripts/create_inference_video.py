@@ -9,6 +9,9 @@ from monai.data.video_dataset import VideoFileDataset
 from monai.visualize.utils import blend_images
 
 from surg_seg.Datasets.VideoDatasets import CombinedVidDataset
+
+# from surg_seg.Datasets.ImageDataset import ImageDataset
+
 from surg_seg.Networks.Models import FlexibleUnet1InferencePipe, AbstractInferencePipe
 
 
@@ -20,7 +23,13 @@ class VideoCreator:
         self.get_codec()
         self.fourcc = cv2.VideoWriter_fourcc(*self.codec)
 
-    def create_video(self, model_pipe: AbstractInferencePipe, output_file, ds, check_codec=True):
+    def create_video(
+        self,
+        model_pipe: AbstractInferencePipe,
+        output_file,
+        ds: CombinedVidDataset,
+        check_codec=True,
+    ):
         if check_codec:
             self.check_codec
 
@@ -28,8 +37,8 @@ class VideoCreator:
 
         for idx in range(len(ds)):
             img = ds[idx]["image"]
-            inferred = model_pipe.infer(img)
-            blended = blend_images(img, inferred, cmap="viridis", alpha=0.2)
+            inferred_single_ch = model_pipe.infer(img)
+            blended = blend_images(img, inferred_single_ch, cmap="viridis", alpha=0.8)
 
             if idx == 0:
                 width_height = blended.shape[1:][::-1]
@@ -61,13 +70,14 @@ class VideoCreator:
 def main():
 
     device = "cuda"
-    path_to_weights = Path("./assets/weights/myweights/myweights.pt")
-    model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device)
+    path_to_weights = Path("./assets/weights/myweights_image/myweights.pt")
+    model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device, out_channels=5)
 
     ## Data loading
-    vid_root = Path("/home/juan1995/research_juan/accelnet_grant/data/rec04/")
-    vid_filepath = vid_root / "raw/rec04_seg_raw.avi"
-    seg_filepath = vid_root / "annotation2colors/rec04_seg_annotation2colors.avi"
+    rec_num = 3
+    vid_root = Path(f"/home/juan1995/research_juan/accelnet_grant/data/rec{rec_num:02d}/")
+    vid_filepath = vid_root / f"raw/rec{rec_num:02d}_seg_raw.avi"
+    seg_filepath = vid_root / f"annotation2colors/rec{rec_num:02d}_seg_annotation2colors.avi"
 
     ds = CombinedVidDataset(vid_filepath, seg_filepath)
 
