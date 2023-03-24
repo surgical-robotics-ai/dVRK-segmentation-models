@@ -21,6 +21,7 @@ import pickle
 class TrainingStats:
     loss_list: List[float] = field(default_factory=list)
     iou_list: List[float] = field(default_factory=list)
+    validation_iou_list: List[float] = field(default_factory=list)
     epoch_list: List[float] = field(default_factory=list)
 
     def add_element(self, epoch, loss, iou):
@@ -29,10 +30,11 @@ class TrainingStats:
         self.iou_list.append(iou)
 
     def plot_stats(self, file_path: Path = None):
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6), facecolor="white")
-        ax.set_xlabel("Epoch")
-        ax.plot(self.epoch_list, self.loss_list, label="loss")
-        ax.plot(self.epoch_list, self.iou_list, label="iou")
+        fig, ax = plt.subplots(1, 2, figsize=(6, 6), facecolor="white")
+        [axi.set_xlabel("Epoch") for axi in ax.squeeze()]
+        ax[0].plot(self.epoch_list, self.loss_list, label="loss")
+        ax[1].plot(self.epoch_list, self.iou_list, label="train iou")
+        ax[1].plot(self.epoch_list, self.validation_iou_list, label="val iou")
 
         if file_path is not None:
             plt.savefig(file_path / "training_stats.png")
@@ -65,7 +67,7 @@ class ModelTrainer:
         self.loss_function = DiceLoss(sigmoid=True)
 
     def train_model(
-        self, model: torch.nn.Module, optimizer: torch.optim.Adam, dl
+        self, model: torch.nn.Module, optimizer: torch.optim.Adam, training_dl, validation_dl=None
     ) -> Tuple[torch.nn.Module, TrainingStats]:
         training_stats = TrainingStats()
 
@@ -74,7 +76,7 @@ class ModelTrainer:
             model.train()
             epoch_loss = 0
 
-            for batch_data in dl:
+            for batch_data in training_dl:
                 inputs, labels = batch_data["image"].to(self.device), batch_data["label"].to(
                     self.device
                 )
@@ -91,13 +93,34 @@ class ModelTrainer:
 
             epoch_iou = self.iou_metric.aggregate().item()
             self.iou_metric.reset()
-            epoch_loss /= len(dl)
+            epoch_loss /= len(training_dl)
             training_stats.add_element(epoch, epoch_loss, epoch_iou)
 
             # Update progress bar
             tr.set_description(f"Loss: {epoch_loss:.4f}")
 
+            if validation_dl is not None:
+                model.eval()
+                validation_iou = self.calculate_validation_iou(model, validation_dl)
+                training_stats.validation_iou_list.append(validation_iou)
+
         return model, training_stats
+
+    def calculate_validation_iou(self, model, validation_dl):
+        with torch.no_grad():
+            for batch_data in validation_dl:
+                inputs, labels = batch_data["image"].to(self.device), batch_data["label"].to(
+                    self.device
+                )
+                outputs = model(inputs)
+
+                pred = [self.post_trans(x) for x in decollate_batch(outputs)]
+                label = [x for x in decollate_batch(labels)]
+                batch_iou = self.iou_metric(y_pred=pred, y=label)
+
+        validation_iou = self.iou_metric.aggregate().item()
+        self.iou_metric.reset()
+        return validation_iou
 
 
 def create_FlexibleUnet(device, pretrained_weights_path: Path, out_channels: int):
@@ -146,16 +169,25 @@ def train_with_video_dataset():
 
 def train_with_image_dataset():
     device = "cpu"
-    data_dir = Path("/home/juan1995/research_juan/accelnet_grant/data/rec03")
-    ds = ImageSegmentationDataset(data_dir, "5colors")
+    root = Path("/home/juan1995/research_juan/accelnet_grant/data")
+    train_dirs = [root / "rec01", root / "rec03", root / "rec05"]
+    val_dirs = [root / "rec02", root / "rec04"]
+
+    ds = ImageSegmentationDataset(train_dirs, "5colors")
     dl = ThreadDataLoader(ds, batch_size=4, num_workers=0, shuffle=True)
+
+    val_ds = ImageSegmentationDataset(val_dirs, "5colors")
+    val_dl = ThreadDataLoader(val_ds, batch_size=4, num_workers=0, shuffle=True)
+
+    print(f"Training dataset size: {len(ds)}")
+    print(f"Validation dataset size: {len(val_ds)}")
 
     pretrained_weigths_path = Path("./assets/weights/trained-weights")
     model = create_FlexibleUnet(device, pretrained_weigths_path, ds.label_channels)
     optimizer = torch.optim.Adam(model.parameters(), 1e-2)
 
     trainer = ModelTrainer(device=device, max_epochs=2)
-    model, training_stats = trainer.train_model(model, optimizer, dl)
+    model, training_stats = trainer.train_model(model, optimizer, dl, validation_dl=val_dl)
 
     training_stats.plot_stats()
 
@@ -164,7 +196,8 @@ def train_with_image_dataset():
     torch.save(model.state_dict(), model_path / "myweights.pt")
     training_stats.to_pickle(model_path)
 
-    print(f"Last IOU {training_stats.iou_list[-1]}")
+    print(f"Last train IOU {training_stats.iou_list[-1]}")
+    print(f"Last validation IOU {training_stats.validation_iou_list[-1]}")
 
 
 def main():

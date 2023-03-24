@@ -284,7 +284,7 @@ def display_images(img, label, blended):
 
 if __name__ == "__main__":
     root = Path("/home/juan1995/research_juan/accelnet_grant/data")
-    data_dirs = [root / "rec01", root / "rec03"]
+    data_dirs = [root / "rec01", root / "rec02", root / "rec03", root / "rec04", root / "rec05"]
 
     ds = ImageSegmentationDataset(data_dirs, "5colors")
 
@@ -293,3 +293,6 @@ if __name__ == "__main__":
     display_untransformed_images(100, ds)
     display_transformed_images(100, ds)
     display_transformed_images(230, ds)
+    display_transformed_images(330, ds)
+    display_transformed_images(430, ds)
+    display_transformed_images(530, ds)
