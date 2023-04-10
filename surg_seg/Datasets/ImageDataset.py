@@ -109,7 +109,7 @@ class LabelParser:
     #     return new_mask
 
 
-class Transforms:
+class ImageTransforms:
 
     img_transforms = T.Compose(
         [
@@ -219,7 +219,7 @@ class ImageSegmentationDataset(Dataset):
         annotation = np.array(Image.open(self.labels_list[idx]))
 
         if transform:
-            image = Transforms.img_transforms(image)
+            image = ImageTransforms.img_transforms(image)
             annotation = self.label_parser.convert_rgb_to_onehot(annotation)
             annotation = torch.tensor(annotation)
 
@@ -234,7 +234,7 @@ def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
     single_ch_annotation = ds.label_parser.convert_onehot_to_single_ch(data["label"])
     single_ch_annotation = np.array(single_ch_annotation)
     # single_ch_annotation = ds.label_parser.convert_rgb_to_single_channel(raw_label)
-    raw_image = np.array(Transforms.inv_transforms(data["image"]))
+    raw_image = np.array(ImageTransforms.inv_transforms(data["image"]))
     raw_label = ds.__getitem__(100, transform=False)["label"]
 
     blended = blend_images(

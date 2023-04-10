@@ -189,7 +189,6 @@ def train_with_image_dataset():
     trainer = ModelTrainer(device=device, max_epochs=2)
     model, training_stats = trainer.train_model(model, optimizer, dl, validation_dl=val_dl)
 
-
     model_path = Path("./assets/weights/myweights_image")
     model_path.mkdir(exist_ok=True)
     torch.save(model.state_dict(), model_path / "myweights.pt")
