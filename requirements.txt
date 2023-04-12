@@ -1,5 +1,6 @@
 opencv-python==4.5.5.64
 ffmpeg==1.4
+click
 # monai==1.1.0
 --extra-index-url https://rospypi.github.io/simple/
 rospy==1.15.11

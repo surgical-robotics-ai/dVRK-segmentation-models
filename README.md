@@ -8,8 +8,7 @@ sudo apt install ffmpeg
 ## Installation of anaconda environment
 
 ```bash
-conda create -n surg_env python=3.9 numpy ipython -y
-conda activate surg_env
+conda create -n surg_env python=3.9 numpy ipython -y && conda activate surg_env
 ```
 ## Installation of `surg_seg` package
 

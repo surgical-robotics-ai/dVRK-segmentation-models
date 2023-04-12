@@ -11,7 +11,7 @@ vid:
   # More info about video coding formats here: https://en.wikipedia.org/wiki/Comparison_of_video_container_formats#Video_formats_supported
   is_on: True # If True, the it will compress the recorded frames into a video at the end
   discard_individual_frames: False # If True, it will discard individual frames, after compressing the final video
-  fps: 15.0 # The da Vinci endoscopes work at 25 Hz
+  fps: 10.0 # The da Vinci endoscopes work at 25 Hz
   format: ".mkv" # MKV supports the majoraty of the codecs, so I would not change it!
   crf:
     15 # Video quality. The smaller the better, but the bigger the video! The range depends in the code, but is usually from 0 to 50 +/-

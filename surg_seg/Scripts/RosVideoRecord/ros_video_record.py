@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import click
 
 # print(sys.version)
 import os
@@ -230,13 +231,31 @@ def compress_frames(frame_path, frame_frmt, frame_frmt_opti):
     return len(files)
 
 
-def main(args):
+@click.command()
+@click.option(
+    "--output_dir",
+    default=None,
+    type=str,
+    help="Output directory for the video. If not provided output dir will be read from config.yaml",
+)
+def main(output_dir):
+    """
+    Script to record video from a pair image rostopics. Check the
+    `surg_seg/Scripts/RosVideoRecording/config.yaml` file for the configuration
+    options such as rostopics and default output_dir.
+    """
+
     rospy.loginfo("Initializing node...")
     rospy.init_node("node_dvrk_record_video", anonymous=True)
 
     window_name = "DVRK Record Video"
     config_path = Path(__file__).parent
     config = get_config_data(config_path)
+
+    if output_dir is not None:
+        log.info("Overriding output_dir from config.yaml with {}".format(output_dir))
+        config["output_dir"] = output_dir
+
     sync = Sync(config_path, config)
     rospy.on_shutdown(sync.stop_recording_and_compress_video)
     log.info("Recording individual frames, and then compress when finished recording...")
@@ -255,4 +274,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
