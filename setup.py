@@ -15,4 +15,5 @@ setuptools.setup(
     install_requires=["numpy", "scipy", "rich", "click"],
     include_package_data=True,
     python_requires=">=3.8",
+    scripts =['surg_seg/Scripts/RosVideoRecord/ros_video_record.py']
 )
