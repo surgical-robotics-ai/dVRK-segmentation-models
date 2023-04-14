@@ -4,7 +4,7 @@ import os
 import cv2 as cv
 import glob
 import argparse
-from scripts.LabelGenerator import LabelGenerator  # customized image class
+from surg_seg.Utils.LabelGenerator import LabelGenerator  # customized image class
 
 # ---------------------------------------------
 # parse arguments
