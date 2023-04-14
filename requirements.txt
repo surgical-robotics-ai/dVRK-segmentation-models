@@ -1,7 +1,9 @@
+rich
 opencv-python==4.5.5.64
 ffmpeg==1.4
 click
-# monai==1.1.0
+natsort==8.2.0
+matplotlib
 --extra-index-url https://rospypi.github.io/simple/
 rospy==1.15.11
 tf2-ros==0.6.5
@@ -10,3 +12,8 @@ cv-bridge==1.13.0.post0
 message-filters==1.15.11
 tf-conversions==1.12.0
 rosbag==1.15.11
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch 
+torchvision
+torchaudio
+monai==1.1.0
