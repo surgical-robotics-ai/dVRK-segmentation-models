@@ -4,7 +4,7 @@ import os
 import cv2 as cv
 import glob
 import argparse
-from Image import ImageCustom  # customized image class
+from scripts.LabelGenerator import LabelGenerator  # customized image class
 
 # ---------------------------------------------
 # parse arguments
@@ -16,17 +16,29 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument(
     "-i",
-    "--image",
+    "--input_dir",
     type=str,
     required=True,
     help="path to the folder that contains the image folder, i.e. ~/data/rec01",
+)
+parser.add_argument(
+    "-o",
+    "--out_dir",
+    type=str,
+    required=False,
+    default=None,
+    help="output directory, default is current working directory",
 )
 args = parser.parse_args()
 
 # ---------------------------------------------
 # output path setup
 # ---------------------------------------------
-folder_name = os.path.join(os.getcwd(), "Output")
+if args.out_dir is not None:
+    folder_name = os.path.join(args.out_dir, "Output")
+else:
+    folder_name = os.path.join(os.getcwd(), "Output")
+
 if not os.path.exists(folder_name):
     os.mkdir(folder_name)
 
@@ -71,7 +83,7 @@ for x in range(5):
     total = len(filenames) / 10 + 1
 
     for img in filenames:
-        cur_img = ImageCustom(img)
+        cur_img = LabelGenerator(img)
         un_select = int(cur_img.seg_str) % 10 != 0
         if un_select:
             continue

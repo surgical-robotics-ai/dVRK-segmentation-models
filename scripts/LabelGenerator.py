@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import os
 
+
 class MaskMapping:
     def __init__(self):
         """Match each BGR color in the original annotation to its mask counterpart.
@@ -20,17 +21,16 @@ class MaskMapping:
         self.mask = [
             {54: 225, 125: 225, 89: 225, 87: 225, 2: 225},
             {54: 225, 125: 225, 89: 225, 87: [0, 0, 250], 2: [0, 250, 0]},
-            {54: 225, 125: 225, 89: [250, 0, 0], 87: [0, 0, 250], 2: [0, 250, 0]}
+            {54: 225, 125: 225, 89: [250, 0, 0], 87: [0, 0, 250], 2: [0, 250, 0]},
         ]
 
 
-class ImageCustom:
-
+class LabelGenerator:
     def __init__(self, img_name):
         self._image = cv.imread(img_name)
 
         if self._image is None:
-            sys.exit('Error: can not load images')
+            sys.exit("Error: can not load images")
 
         self._name = img_name
         self._row, self._col = self._image.shape[:2]
@@ -62,14 +62,14 @@ class ImageCustom:
         :return: date, time, number
         """
         file_name = self._name
-        num = file_name.strip('.png')[-7:]
+        num = file_name.strip(".png")[-7:]
         return num
 
     def get_rawImage(self):
         return self._image[:, : self.get_width(), :]
 
     def get_ambfAnnotation(self):
-        return self._image[:, self.get_width():, :]
+        return self._image[:, self.get_width() :, :]
 
     def __get_annotation_pixel(self, x, y):
         """
@@ -94,7 +94,7 @@ class ImageCustom:
         :return: New frame-->cv::Mat
         """
         if choice > 2:
-            sys.exit('Error: Invalid annotation type')
+            sys.exit("Error: Invalid annotation type")
 
         w = self.get_width()
         h = self.get_height()
@@ -116,15 +116,17 @@ class ImageCustom:
 
 if __name__ == "__main__":
 
-    img_name= os.path.join(os.getcwd().strip('annotation_reformat'), 'data/rec01/2023-02-16_13-03-37_0000000.png')
-    img = ImageCustom(img_name)
+    img_name = os.path.join(
+        os.getcwd().strip("annotation_reformat"), "data/rec01/2023-02-16_13-03-37_0000000.png"
+    )
+    img = LabelGenerator(img_name)
     raw_img = img.get_rawImage()
     ambf_img = img.get_ambfAnnotation()
     annotation_0 = img.get_annotation(0)
     annotation_1 = img.get_annotation(1)
     annotation_2 = img.get_annotation(2)
-    cv.imwrite('ambf_raw.png', raw_img)
-    cv.imwrite('ambf.png', ambf_img)
-    cv.imwrite('1.png', annotation_0)
-    cv.imwrite('2.png', annotation_1)
-    cv.imwrite('3.png', annotation_2)
+    cv.imwrite("ambf_raw.png", raw_img)
+    cv.imwrite("ambf.png", ambf_img)
+    cv.imwrite("1.png", annotation_0)
+    cv.imwrite("2.png", annotation_1)
+    cv.imwrite("3.png", annotation_2)
