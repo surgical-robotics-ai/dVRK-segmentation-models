@@ -70,12 +70,15 @@ class VideoCreator:
 def main():
 
     device = "cuda"
-    path_to_weights = Path("./assets/weights/myweights_image_all_datasets/myweights.pt")
+    # path_to_weights = Path("./assets/weights/myweights_image_all_datasets/myweights.pt")
+    path_to_weights = Path("assets/weights/myweights_3d_med_2_all_ds3/myweights.pt")
     model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device, out_channels=5)
 
     ## Data loading
-    rec_num = 2
-    vid_root = Path(f"/home/juan1995/research_juan/accelnet_grant/data/rec{rec_num:02d}/")
+    rec_num = 1
+    vid_root = Path(
+        f"/home/juan1995/research_juan/accelnet_grant/data/phantom2_data_processed/rec{rec_num:02d}/"
+    )
     vid_filepath = vid_root / f"raw/rec{rec_num:02d}_seg_raw.avi"
     seg_filepath = vid_root / f"annotation2colors/rec{rec_num:02d}_seg_annotation2colors.avi"
 

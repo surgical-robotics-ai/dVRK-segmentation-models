@@ -1,5 +1,5 @@
 from pathlib import Path
-from autonomy_utils.ambf_utils import ImageSaver
+from surg_seg.Utils.ImageSubscriber import ImageSubscriber
 import cv2
 import torch
 import numpy as np
@@ -11,10 +11,10 @@ from surg_seg.Datasets.ImageDataset import ImageTransforms
 
 def main():
 
-    image_saver = ImageSaver()
+    image_saver = ImageSubscriber()
 
     device = "cuda"
-    path_to_weights = Path("./assets/weights/myweights_image_all_datasets/myweights.pt")
+    path_to_weights = Path("./assets/weights/myweights_3d_med_2_all_ds3/myweights.pt")
     model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device, out_channels=5)
 
     while True:

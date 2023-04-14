@@ -12,13 +12,13 @@ from surg_seg.Datasets.VideoDatasets import CombinedVidDataset
 # vid_filepath = vid_root /"endo_vid.mp4"
 # seg_filepath = vid_root /"endo_seg.mp4"
 
-vid_root = Path("./assets/data/ambf_vid/")
-vid_filepath = vid_root / "endo_vid.avi"
-seg_filepath = vid_root / "endo_seg.avi"
+# vid_root = Path("./assets/data/ambf_vid/")
+# vid_filepath = vid_root / "endo_vid.avi"
+# seg_filepath = vid_root / "endo_seg.avi"
 
-vid_root = Path("/home/juan1995/research_juan/accelnet_grant/data/rec01/")
+vid_root = Path("/home/juan1995/research_juan/accelnet_grant/data/phantom2_data_processed/rec01/")
 vid_filepath = vid_root / "raw/rec01_seg_raw.avi"
-seg_filepath = vid_root / "annotation2colors/rec01_seg_annotation2colors.avi"
+seg_filepath = vid_root / "annotation4colors/rec01_seg_annotation4colors.avi"
 
 
 def main():
