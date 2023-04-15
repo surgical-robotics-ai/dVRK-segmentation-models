@@ -2,6 +2,20 @@ import cv2 as cv
 import numpy as np
 import sys
 import os
+from enum import Enum
+from dataclasses import dataclass
+
+@dataclass
+class AnnotationType:
+    directory: str
+    option: int
+
+class AnnotationDirectories(Enum):
+    TWO_COLORS = AnnotationType("annotation2colors", 0)
+    FOUR_COLORS = AnnotationType("annotation4colors", 1)
+    FIVE_COLORS = AnnotationType("annotation5colors", 2)
+    RAW = AnnotationType("raw", 100)
+    AMBF_LABEL = AnnotationType("raw", 100)
 
 
 class MaskMapping:
@@ -87,10 +101,10 @@ class LabelGenerator:
 
     def get_annotation(self, choice):
         """
-        #1: black-white (PSM arms/grippers, needle, thread = white [0,1,2,3,4]), the rest are black
-        #2: black-3 colors (PSM arms/grippers = white[0,1,2], needle = blue[3], thread = green[4]), the rest are black
-        #3: black-4 colors (PSM arms = white[0,1], PSM grippers = purple[2], needle = blue[3], thread = green[4]), the rest are black
-        :param choice: 1, 2, 3
+        #0: black-white (PSM arms/grippers, needle, thread = white [0,1,2,3,4]), the rest are black
+        #1: black-3 colors (PSM arms/grippers = white[0,1,2], needle = blue[3], thread = green[4]), the rest are black
+        #2: black-4 colors (PSM arms = white[0,1], PSM grippers = purple[2], needle = blue[3], thread = green[4]), the rest are black
+        :param choice: 0, 1, 2
         :return: New frame-->cv::Mat
         """
         if choice > 2:
