@@ -17,6 +17,6 @@ setuptools.setup(
     python_requires=">=3.8",
     scripts=[
         "surg_seg/Scripts/RosVideoRecord/ros_video_record.py",
-        "surg_seg/Scripts/generate_segmentation_labels.py",
+        "surg_seg/Scripts/generate_labels.py",
     ],
 )
