@@ -16,7 +16,6 @@ def process_in_out_paths(input_dir: str, output_dir) -> Tuple[Path, Path]:
         output_dir = Path(output_dir)
     else:
         output_dir = Path.cwd() / "output"
-    print(f"Output folder: {output_dir}")
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
@@ -24,7 +23,7 @@ def process_in_out_paths(input_dir: str, output_dir) -> Tuple[Path, Path]:
     sub_folder_name = output_dir / input_dir.name
     sub_folder_name.mkdir(exist_ok=True)
 
-    return input_dir, output_dir
+    return input_dir.resolve(), output_dir.resolve()
 
 
 def parse_annotation_type(annotation_type: list) -> int:
@@ -97,6 +96,9 @@ def main(input_dir, output_dir, sample_every, annotation_type):
     annotations_to_generate = parse_annotation_type(annotation_type)
 
     category_folder_name = create_output_dirs(input_dir, output_dir, annotations_to_generate)
+
+    print(f"Input folder: {input_dir}")
+    print(f"Output folder: {output_dir}\n")
 
     # ---------------------------------------------
     # output file setup
