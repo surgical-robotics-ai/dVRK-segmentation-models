@@ -5,17 +5,25 @@ import os
 from enum import Enum
 from dataclasses import dataclass
 
-@dataclass
-class AnnotationType:
-    directory: str
-    option: int
+# @dataclass
+# class AnnotationType:
+#     directory: str
+#     option: int
 
-class AnnotationDirectories(Enum):
-    TWO_COLORS = AnnotationType("annotation2colors", 0)
-    FOUR_COLORS = AnnotationType("annotation4colors", 1)
-    FIVE_COLORS = AnnotationType("annotation5colors", 2)
-    RAW = AnnotationType("raw", 100)
-    AMBF_LABEL = AnnotationType("raw", 100)
+# class AnnotationDirectories(Enum):
+#     TWO_COLORS = AnnotationType("annotation2colors", 0)
+#     FOUR_COLORS = AnnotationType("annotation4colors", 1)
+#     FIVE_COLORS = AnnotationType("annotation5colors", 2)
+#     RAW = AnnotationType("raw", 100)
+#     AMBF_LABEL = AnnotationType("raw", 100)
+
+
+class AnnotationProcesses(Enum):
+    annotation2colors = 0
+    annotation4colors = 1
+    annotation5colors = 2
+    raw = 100
+    annotationAMBF = 101
 
 
 class MaskMapping:
