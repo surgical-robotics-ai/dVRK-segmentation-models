@@ -15,8 +15,14 @@ setuptools.setup(
     install_requires=["numpy", "rich", "click"],
     include_package_data=True,
     python_requires=">=3.8",
-    scripts=[
-        "surg_seg/Scripts/RosVideoRecord/ros_video_record.py",
-        "surg_seg/Scripts/generate_labels.py",
-    ],
+    # scripts=[ #This does not get uninstalled with `pip uninstall surg_seg`
+    #     "surg_seg/Scripts/RosVideoRecord/ros_video_record.py",
+    #     "surg_seg/Scripts/generate_labels.py",
+    # ],
+    entry_points={
+        "console_scripts": [
+            "surg_seg_generate_labels = surg_seg.Scripts.generate_labels:main",
+            "surg_seg_ros_video_record = surg_seg.Scripts.RosVideoRecord.ros_video_record:main",
+        ]
+    },
 )
