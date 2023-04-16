@@ -21,16 +21,12 @@ def main():
         frame = image_saver.get_current_frame("left")
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        tensor = ImageTransforms.img_transforms(frame).to(device)
-        tensor = torch.unsqueeze(tensor, 0)  # Add batch dimension. 4D tensor
+        input_tensor, inferred_single_ch = model_pipe.infer(frame)
 
-        inferred = model_pipe.model(tensor)[0]  # go back to 3D tensor
-        inferred = inferred.argmax(dim=0, keepdim=True)
+        inferred_single_ch = inferred_single_ch.detach().cpu()
+        input_tensor = input_tensor.detach().cpu()[0]
 
-        inferred = inferred.detach().cpu()
-        tensor = tensor.detach().cpu()[0]
-
-        blended = blend_images(tensor, inferred, cmap="viridis", alpha=0.8).numpy()
+        blended = blend_images(input_tensor, inferred_single_ch, cmap="viridis", alpha=0.8).numpy()
         blended = (np.transpose(blended, (1, 2, 0)) * 254).astype(np.uint8)
         blended = cv2.cvtColor(blended, cv2.COLOR_RGB2BGR)
 

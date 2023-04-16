@@ -25,7 +25,7 @@ class VideoCreator:
 
     def create_video(
         self,
-        model_pipe: AbstractInferencePipe,
+        model_pipe: FlexibleUnet1InferencePipe,
         output_file,
         ds: CombinedVidDataset,
         check_codec=True,
@@ -37,7 +37,7 @@ class VideoCreator:
 
         for idx in range(len(ds)):
             img = ds[idx]["image"]
-            inferred_single_ch = model_pipe.infer(img)
+            inferred_single_ch = model_pipe.infer_from_monai_tensor(img)
             blended = blend_images(img, inferred_single_ch, cmap="viridis", alpha=0.8)
 
             if idx == 0:

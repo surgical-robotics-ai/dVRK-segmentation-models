@@ -2,8 +2,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from monai.networks.nets import FlexibleUNet
-
+from monai.data.meta_tensor import MetaTensor
 import torch
+import numpy as np
+
+from surg_seg.Datasets.ImageDataset import ImageTransforms
 
 
 @dataclass
@@ -34,7 +37,10 @@ class FlexibleUnet1InferencePipe(AbstractInferencePipe):
 
         self.upload_weights()
 
-    def infer(self, im: torch.Tensor):
+    def infer_from_monai_tensor(self, im: MetaTensor):
+        """
+        Infer from a monai tensor. This is the default output of all monai datasets.
+        """
         im = im.to(self.device)
         # inferred = self.model(im[None]) > 0
         # im is a metatensor. im[None] is a tensor with a batch dimension of 1
@@ -42,6 +48,27 @@ class FlexibleUnet1InferencePipe(AbstractInferencePipe):
         inferred = inferred.argmax(dim=0, keepdim=True)
         inferred = inferred.detach().cpu()
         return inferred
+
+    def infer_from_transformed_tensor(self, input_tensor: torch.Tensor):
+        input_tensor = torch.unsqueeze(input_tensor, 0)  # Add batch dimension. 4D input_tensor
+        inferred = self.model(input_tensor)
+        inferred = inferred[0]  # go back to 3D tensor
+        inferred_single_ch = inferred.argmax(dim=0, keepdim=True)  # Get a single channel image
+
+        return inferred_single_ch
+
+    def infer(self, im: np.ndarray):
+        """
+        Infer from RGB and unormalize numpy array. If loading data with opencv,
+        make sure to convert to RGB.
+        """
+        input_tensor = ImageTransforms.img_transforms(im).to(self.device)
+        input_tensor = torch.unsqueeze(input_tensor, 0)  # Add batch dimension. 4D input_tensor
+        inferred = self.model(input_tensor)
+        inferred = inferred[0]  # go back to 3D tensor
+        inferred_single_ch = inferred.argmax(dim=0, keepdim=True)  # Get a single channel image
+
+        return input_tensor, inferred_single_ch
 
     def upload_weights(self):
         self.model.load_state_dict(torch.load(self.path_to_weights))
