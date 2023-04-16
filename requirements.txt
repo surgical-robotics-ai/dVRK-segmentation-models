@@ -12,8 +12,3 @@ cv-bridge==1.13.0.post0
 message-filters==1.15.11
 tf-conversions==1.12.0
 rosbag==1.15.11
---extra-index-url https://download.pytorch.org/whl/cu117
-torch 
-torchvision
-torchaudio
-monai==1.1.0
