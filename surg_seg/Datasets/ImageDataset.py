@@ -235,7 +235,7 @@ def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
     single_ch_annotation = np.array(single_ch_annotation)
     # single_ch_annotation = ds.label_parser.convert_rgb_to_single_channel(raw_label)
     raw_image = np.array(ImageTransforms.inv_transforms(data["image"]))
-    raw_label = ds.__getitem__(100, transform=False)["label"]
+    raw_label = ds.__getitem__(idx, transform=False)["label"]
 
     blended = blend_images(
         raw_image,
@@ -248,7 +248,7 @@ def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
 
 
 def display_untransformed_images(idx: int, ds: ImageSegmentationDataset):
-    data = ds.__getitem__(100, transform=False)  # Get raw images
+    data = ds.__getitem__(idx, transform=False)  # Get raw images
 
     raw_image = data["image"]
     raw_label = data["label"]
