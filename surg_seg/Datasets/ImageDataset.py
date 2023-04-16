@@ -229,7 +229,7 @@ class ImageSegmentationDataset(Dataset):
 def display_transformed_images(idx: int, ds: ImageSegmentationDataset):
 
     data = ds[idx]  # Get transformed images
-    print(f"one-hot shape: {data['label'].shape}")
+    # print(f"one-hot shape: {data['label'].shape}")
 
     single_ch_annotation = ds.label_parser.convert_onehot_to_single_ch(data["label"])
     single_ch_annotation = np.array(single_ch_annotation)
