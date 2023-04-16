@@ -233,6 +233,7 @@ def compress_frames(frame_path, frame_frmt, frame_frmt_opti):
 
 @click.command()
 @click.option(
+    "-o",
     "--output_dir",
     default=None,
     type=str,
@@ -253,8 +254,9 @@ def main(output_dir):
     config = get_config_data(config_path)
 
     if output_dir is not None:
+        output_dir = Path(output_dir).resolve()
         log.info("Overriding output_dir from config.yaml with {}".format(output_dir))
-        config["output_dir"] = output_dir
+        config["output_dir"] = str(output_dir)
 
     sync = Sync(config_path, config)
     rospy.on_shutdown(sync.stop_recording_and_compress_video)
