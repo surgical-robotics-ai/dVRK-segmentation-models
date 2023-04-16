@@ -254,10 +254,10 @@ def display_untransformed_images(idx: int, ds: ImageSegmentationDataset):
     raw_label = data["label"]
     onehot = ds.label_parser.convert_rgb_to_onehot(raw_label)
 
-    fake_annotation = np.zeros_like(np.array(data["image"]))
-    fake_annotation[:40, :40] = [1, 1, 1]
-    fake_annotation[40:80, 40:80] = [2, 2, 2]
-    fake_annotation[80:120, 80:120] = [3, 3, 3]
+    # fake_annotation = np.zeros_like(np.array(data["image"]))
+    # fake_annotation[:40, :40] = [1, 1, 1]
+    # fake_annotation[40:80, 40:80] = [2, 2, 2]
+    # fake_annotation[80:120, 80:120] = [3, 3, 3]
 
     single_ch_label = ds.label_parser.convert_rgb_to_single_channel(raw_label)
     blended = blend_images(
