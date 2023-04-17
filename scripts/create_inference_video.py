@@ -7,8 +7,8 @@ import torch
 
 from monai.data.video_dataset import VideoFileDataset
 from monai.visualize.utils import blend_images
-
-from surg_seg.Datasets.VideoDatasets import CombinedVidDataset
+from tqdm import tqdm
+from surg_seg.Datasets.VideoDatasets import CombinedVidDataset, VidDataset
 
 # from surg_seg.Datasets.ImageDataset import ImageDataset
 
@@ -35,7 +35,7 @@ class VideoCreator:
 
         print(f"{len(ds)} frames @ {self.fps} fps: {output_file}...")
 
-        for idx in range(len(ds)):
+        for idx in tqdm(range(len(ds))):
             img = ds[idx]["image"]
             inferred_single_ch = model_pipe.infer_from_monai_tensor(img)
             blended = blend_images(img, inferred_single_ch, cmap="viridis", alpha=0.8)
@@ -67,12 +67,10 @@ class VideoCreator:
         os.remove("test" + self.ext)
 
 
-def main():
-
-    device = "cuda"
+def config1():
+    """Config when doing inference Annie's folder structure"""
     # path_to_weights = Path("./assets/weights/myweights_image_all_datasets/myweights.pt")
     path_to_weights = Path("assets/weights/myweights_3d_med_2_all_ds3/myweights.pt")
-    model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device, out_channels=5)
 
     ## Data loading
     rec_num = 1
@@ -80,11 +78,31 @@ def main():
         f"/home/juan1995/research_juan/accelnet_grant/data/phantom2_data_processed/rec{rec_num:02d}/"
     )
     vid_filepath = vid_root / f"raw/rec{rec_num:02d}_seg_raw.avi"
-    seg_filepath = vid_root / f"annotation2colors/rec{rec_num:02d}_seg_annotation2colors.avi"
-
-    ds = CombinedVidDataset(vid_filepath, seg_filepath)
 
     output_path = vid_root / "inferred.mp4"
+
+    return path_to_weights, vid_filepath, output_path
+
+
+def config2():
+    """Config with simple folder structure."""
+    path_to_weights = Path("assets/weights/myweights_3d_med_2_all_ds3/myweights.pt")
+    ## Data loading
+    vid_filepath = Path(
+        "/home/juan1995/research_juan/accelnet_grant/data/dVRK_data_processed/rec03_right.avi"
+    )
+    output_path = vid_filepath.parent / (vid_filepath.with_suffix("").name + "_inferred.mp4")
+
+    return path_to_weights, vid_filepath, output_path
+
+
+def main():
+    device = "cuda"
+    # Choose which config to use config1() or config2()
+    path_to_weights, vid_filepath, output_path = config2()
+
+    model_pipe = FlexibleUnet1InferencePipe(path_to_weights, device, out_channels=5)
+    ds = VidDataset(vid_filepath)
 
     # create video
     fps = ds.ds_img.get_fps()

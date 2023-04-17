@@ -16,6 +16,16 @@ class Transforms:
     seg_transforms = mt.Compose([vid_transforms, mt.Lambda(lambda x: x[:1])])  # rgb -> 1 chan
 
 
+class VidDataset(Dataset):
+    def __init__(self, vid_file):
+        self.ds_img = VideoFileDataset(str(vid_file), Transforms.vid_transforms)
+
+    def __len__(self):
+        return len(self.ds_img)
+
+    def __getitem__(self, idx):
+        return {"image": self.ds_img[idx]}
+
 class CombinedVidDataset(Dataset):
     def __init__(self, vid_file, seg_file):
         self.ds_img = VideoFileDataset(str(vid_file), Transforms.vid_transforms)
