@@ -88,8 +88,11 @@ def config2():
     """Config with simple folder structure."""
     path_to_weights = Path("assets/weights/myweights_3d_med_2_all_ds3/myweights.pt")
     ## Data loading
+    # vid_filepath = Path(
+    #     "/home/juan1995/research_juan/accelnet_grant/data/dVRK_data_processed/rec03_right.avi"
+    # )
     vid_filepath = Path(
-        "/home/juan1995/research_juan/accelnet_grant/data/dVRK_data_processed/rec03_right.avi"
+        "/home/juan1995/research_juan/accelnet_grant/data/zed_camera_processed/rec04/2023-04-17_18-35-37_rightXX.avi"
     )
     output_path = vid_filepath.parent / (vid_filepath.with_suffix("").name + "_inferred.mp4")
 
