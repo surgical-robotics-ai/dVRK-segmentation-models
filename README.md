@@ -15,7 +15,7 @@ conda create -n surg_env python=3.9 numpy ipython  -y && conda activate surg_env
 `Surg_seg` is a python package that includes most of the code to interface with the trained models
 
 ```bash
-pip install -e . -r requirements.txt
+pip install -e . -r requirements.txt --user
 ```
 
 ## Erase Anaconda virtual environment
