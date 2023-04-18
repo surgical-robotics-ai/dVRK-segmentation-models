@@ -1,0 +1,5 @@
+# This file assumes you have ROS libraries availables
+rich
+click
+natsort==8.2.0
+tqdm
