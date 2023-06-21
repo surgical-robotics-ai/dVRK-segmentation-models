@@ -1,0 +1,34 @@
+imports:
+  - $from pathlib import Path
+
+workspace: $Path('/home/juan1995/research_juan/accelnet_grant/dVRK-segmentation-models')
+data_dir: $Path('/home/juan1995/research_juan/accelnet_grant/data/phantom2_data_processed')
+annotations_type: "5colors"
+
+ambf_train_config:
+  annotations_type: $@annotations_type
+  data_dir: $@data_dir
+  train_dir_list: $[@data_dir / "rec01", @data_dir / "rec03", @data_dir / "rec05"]
+  val_dir_list: $[@data_dir / "rec02", @data_dir / "rec04"]
+  pretrained_weights_path: $@workspace / 'assets/weights/myweights_image'
+  training_output_path: $@workspace / 'assets/weights/myweights_image'
+  mapping_file: $@data_dir / "rec01" / "mapping.json"
+  device: "cpu"
+  epochs: 2
+  learning_rate: $float("1e-3")
+
+#elements in same label cannot reference to each other.
+test:
+  x: $1+6
+  y: $@ambf_train_config#epochs * 2
+  z:
+    zz: "@test#x"
+
+# simple yaml
+ambf_data_training_config_simple:
+  device: "cpu"
+  root: "/home/juan1995/research_juan/accelnet_grant/data"
+  annotations_type: "5colors"
+  path_for_trained_model: "./assets/weights/myweights_image"
+  epochs: 2
+  learning_rate: 1e-2

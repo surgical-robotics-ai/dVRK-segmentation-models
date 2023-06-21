@@ -1,0 +1,14 @@
+object_names:
+    - background
+    - needle
+    - psm 
+
+background:
+    class_id: 0
+    rgb: [0, 0, 0]
+needle:
+    class_id: 1
+    rgb: [255, 255, 0]
+psm:
+    class_id: 2
+    rgb: [0,255, 0]
