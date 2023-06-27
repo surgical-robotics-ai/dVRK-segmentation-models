@@ -1,0 +1,18 @@
+imports:
+  - $from pathlib import Path
+
+workspace: $Path('/home/jbarrag3/research_juan/dVRK-segmentation-models')
+data_dir: $Path('/home/jbarrag3/research_juan/data/phantom2_3d_med_rec/')
+annotations_type: "5colors"
+
+ambf_train_config:
+  annotations_type: $@annotations_type
+  data_dir: $@data_dir
+  train_dir_list: $[@data_dir / "rec01", @data_dir / "rec03", @data_dir / "rec05"]
+  val_dir_list: $[@data_dir / "rec02", @data_dir / "rec04"]
+  pretrained_weights_path: $@workspace / 'assets/weights/pretrained-weights'
+  training_output_path: $@workspace / 'assets/weights/myweights_3d_med_2_all_ds4'
+  mapping_file: $@data_dir / "rec01" / "mapping.json"
+  device: "cuda"
+  epochs: 140
+  learning_rate: $float("1e-3")

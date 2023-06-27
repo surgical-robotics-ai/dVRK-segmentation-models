@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
+import monai
 from monai.networks.nets import FlexibleUNet
 from monai.data.meta_tensor import MetaTensor
 import torch
@@ -18,6 +19,26 @@ class AbstractInferencePipe(ABC):
     @abstractmethod
     def upload_weights(self):
         pass
+
+
+def create_FlexibleUnet(device, pretrained_weights_path: Path, out_channels: int):
+    model = FlexibleUNet(
+        in_channels=3,
+        out_channels=out_channels,
+        backbone="efficientnet-b0",
+        pretrained=True,
+        is_pad=False,
+    ).to(device)
+
+    pretrained_weights = monai.bundle.load(
+        name="endoscopic_tool_segmentation", bundle_dir=pretrained_weights_path, version="0.2.0"
+    )
+    model_weight = model.state_dict()
+    weights_no_head = {k: v for k, v in pretrained_weights.items() if not "segmentation_head" in k}
+    model_weight.update(weights_no_head)
+    model.load_state_dict(model_weight)
+
+    return model
 
 
 @dataclass

@@ -1,0 +1,30 @@
+imports:
+  - $from pathlib import Path
+
+workspace: $Path('/home/juan1995/research_juan/accelnet_grant/dVRK-segmentation-models')
+data_dir: $Path('/home/juan1995/research_juan/accelnet_grant/data/dVRK_data_processed/rec03_processed/rec03_left_crop_images_sample5')
+
+ambf_train_config:
+  data_dir: $@data_dir
+  train_dir_list: $[@data_dir / "train"]
+  val_dir_list: $[@data_dir / "valid"]
+  pretrained_weights_path: $@workspace / 'assets/weights/pretrained-weights'
+  training_output_path: $@workspace / 'assets/weights/real_dvrk_weights_d1'
+  mapping_file: $@data_dir / "dataset_config.yaml"
+  device: "cpu"
+  epochs: 2
+  learning_rate: $float("1e-3")
+
+test:
+  _requires_: "@create_test_dir"
+  root: $Path('/home/juan1995/research_juan/accelnet_grant/dVRK-segmentation-models/assets/weights/')
+  weights: $@test#root / 'myweights_realdvrk_d1_v0.0/myweights.pt'
+  predictions_dir: $@ambf_train_config#data_dir / 'predictions'
+
+create_test_dir:
+  - $print('creating test dir...')
+  - $@test#predictions_dir.mkdir(parents=True, exist_ok=True)
+
+check_paths:
+  - $print("train_dir exists:", @ambf_train_config#train_dir_list[0].exists())
+  - $print("valid exists:", @ambf_train_config#val_dir_list[0].exists())
